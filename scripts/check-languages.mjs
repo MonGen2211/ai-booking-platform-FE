@@ -1,0 +1,50 @@
+import { chromium, expect } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
+const browser = await chromium.launch({ channel:'chrome', headless:true });
+await mkdir('artifacts/ui', {recursive:true});
+try {
+  for(const width of [375,768,1440]) {
+    const page = await browser.newPage({ viewport:{width,height:1000} });
+    const errors = []; page.on('pageerror',e=>errors.push(e.message));
+    await page.goto('http://localhost:5173');
+    await page.getByRole('button',{name:'English',exact:true}).click();
+    await expect(page.locator('html')).toHaveAttribute('lang','en');
+    await expect(page.getByRole('heading',{name:/Your visit, your schedule/})).toBeVisible();
+    await expect(page.getByRole('link',{name:'Home',exact:true})).toBeVisible();
+    await page.evaluate(()=>document.fonts.ready);
+    expect(await page.evaluate(()=>document.fonts.check('16px "Noto Sans"'))).toBe(true);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({path:`artifacts/ui/home-en-${width}.png`,fullPage:true});
+    await page.getByRole('button',{name:'Open An Tâm assistant'}).click();
+    const chat=page.getByRole('dialog',{name:'An Tâm assistant'});
+    await expect(chat.getByRole('button',{name:'I would like to book an appointment'})).toBeVisible();
+    await chat.getByRole('textbox').fill('Keep my draft — giữ nguyên nội dung');
+    await page.getByRole('button',{name:'Tiếng Việt',exact:true}).click();
+    await expect(page.getByRole('dialog',{name:'Trợ lý An Tâm'}).getByRole('textbox')).toHaveValue('Keep my draft — giữ nguyên nội dung');
+    await expect(page.getByRole('button',{name:'Tôi muốn đặt lịch khám',exact:true})).toBeVisible();
+    await page.getByRole('button',{name:'English',exact:true}).click();
+    await page.screenshot({path:`artifacts/ui/chatbot-en-${width}.png`});
+    await page.keyboard.press('Escape');
+    await page.getByRole('button',{name:'Sign in',exact:true}).click();
+    const auth=page.getByRole('dialog',{name:'Welcome back'});
+    await expect(auth.getByLabel('Email')).toBeVisible();
+    await expect(auth.getByLabel('Password',{exact:false}).first()).toBeVisible();
+    await auth.getByRole('button',{name:'Sign up',exact:true}).click();
+    await expect(page.getByRole('dialog').getByText('Use at least 8 characters.')).toBeVisible();
+    await page.screenshot({path:`artifacts/ui/auth-en-${width}.png`});
+    await page.keyboard.press('Escape');
+    await page.getByRole('link',{name:'Book an appointment',exact:true}).first().click();
+    await expect(page.getByRole('heading',{name:'Book an appointment',exact:true})).toBeVisible();
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.reload();
+    await expect(page.locator('html')).toHaveAttribute('lang','en');
+    await expect(page.getByRole('tab',{name:'My appointments',exact:true})).toBeVisible();
+    await page.getByRole('tab',{name:'My appointments',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Your appointments, all in one place'})).toBeVisible();
+    await page.getByRole('button',{name:'Tiếng Việt',exact:true}).click();
+    await expect(page.getByRole('heading',{name:'Lịch hẹn của bạn, ở một nơi'})).toBeVisible();
+    expect(errors).toEqual([]);
+    console.log(`PASS ${width}px: font loaded, VI/EN switch, draft preserved, auth, booking, reload, no overflow/errors`);
+    await page.close();
+  }
+} finally { await browser.close(); }

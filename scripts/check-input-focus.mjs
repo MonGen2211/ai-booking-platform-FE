@@ -1,0 +1,31 @@
+import { chromium, expect } from '@playwright/test';
+const browser = await chromium.launch({channel:'chrome',headless:true});
+try {
+  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  await page.goto('http://localhost:5173');
+  const search=page.getByRole('searchbox');
+  await search.click();
+  await expect(search).toHaveAttribute('autocomplete','off');
+  expect(await search.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('none');
+  expect(await search.evaluate(el=>getComputedStyle(el).cursor)).toBe('text');
+  await search.fill('Tìm bác sĩ');
+  await expect(search).toHaveValue('Tìm bác sĩ');
+  const heading=page.getByRole('heading',{name:'Tìm bác sĩ phù hợp với bạn'});
+  await heading.click();
+  await page.keyboard.type('must-not-edit-page');
+  await expect(heading).toHaveText('Tìm bác sĩ phù hợp với bạn');
+  expect(await heading.evaluate(el=>el.isContentEditable)).toBe(false);
+  expect(await heading.evaluate(el=>getComputedStyle(el).cursor)).toBe('default');
+  expect(await page.locator('[contenteditable]:not([contenteditable="false"])').count()).toBe(0);
+  const language=page.getByRole('button',{name:'English',exact:true});
+  await language.focus();
+  expect(await language.evaluate(el=>getComputedStyle(el).outlineColor)).toBe('rgb(8, 126, 139)');
+  await page.getByRole('button',{name:'Đăng nhập',exact:true}).click();
+  const email=page.getByRole('dialog').getByLabel('Email');
+  await expect(email).toBeFocused();
+  expect(await email.evaluate(el=>getComputedStyle(el).outlineStyle)).toBe('none');
+  await email.fill('patient@example.com');
+  await expect(email).toHaveValue('patient@example.com');
+  await expect(email).toHaveAttribute('autocomplete','email');
+  console.log('PASS: search/auth inputs editable without yellow outline; static text not editable; keyboard focus visible in teal; only search disables autofill');
+} finally {await browser.close();}

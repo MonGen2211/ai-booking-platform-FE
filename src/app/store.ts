@@ -1,0 +1,12 @@
+import { configureStore } from '@reduxjs/toolkit';
+import auth, { privateReset } from '../features/auth/authSlice';
+import doctors from '../features/doctors/doctorSlice';
+import patientProfiles from '../features/patientProfiles/patientProfileSlice';
+import attachments from '../features/attachments/attachmentSlice';
+import appointments from '../features/appointments/appointmentSlice';
+import { onSessionCleared } from '../api/axiosClient';
+export const makeStore = () => configureStore({ reducer: { auth, doctors, patientProfiles, attachments, appointments } });
+export const store = makeStore();
+onSessionCleared(() => store.dispatch(privateReset()));
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

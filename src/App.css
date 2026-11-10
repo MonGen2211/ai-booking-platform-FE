@@ -1,0 +1,13 @@
+#center { display: flex; flex-direction: column; gap: 24px; align-items: center; justify-content: center; flex: 1; padding: 40px 20px; text-align: center; }
+.hero { position: relative; width: 170px; height: 179px; }
+.hero img { position: absolute; inset: 0; margin: auto; }
+.hero .base { width: 170px; }
+.hero .framework { width: 48px; transform: translate(-25px, -34px) rotate(-24deg); }
+.hero .vite { width: 48px; transform: translate(28px, 38px); }
+.counter { padding: 8px 14px; border: 1px solid #646cff; border-radius: 8px; background: #646cff; color: white; font: inherit; cursor: pointer; }
+#next-steps { display: flex; border-top: 1px solid #e5e7eb; text-align: left; }
+#next-steps > div { flex: 1; padding: 28px; }
+#next-steps > div + div { border-left: 1px solid #e5e7eb; }
+#next-steps ul { display: flex; gap: 18px; padding: 0; list-style: none; }
+a { color: #646cff; }
+@media (max-width: 640px) { #next-steps { flex-direction: column; } #next-steps > div + div { border-left: 0; border-top: 1px solid #e5e7eb; } }
